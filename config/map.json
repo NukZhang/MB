@@ -1,0 +1,23 @@
+{
+  "battleArea": {
+    "width": 150,
+    "height": 30,
+    "backgroundColor": "#1a1a2e"
+  },
+  "playerBuilding": {
+    "x": 10,
+    "y": 15,
+    "width": 4,
+    "height": 6,
+    "spawnInterval": 10,
+    "imagePath": ""
+  },
+  "enemyBuilding": {
+    "x": 140,
+    "y": 15,
+    "width": 4,
+    "height": 6,
+    "spawnInterval": 10,
+    "imagePath": ""
+  }
+}

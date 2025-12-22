@@ -1,0 +1,30 @@
+{
+  "player": {
+    "size": 2.0,
+    "maxSpeed": 8.64,
+    "acceleration": 60,
+    "mass": 80,
+    "health": 2000
+  },
+  "infantry": {
+    "size": 1.5,
+    "maxSpeed": 3,
+    "acceleration": 15,
+    "mass": 70,
+    "health": 80
+  },
+  "cavalry": {
+    "size": 1.5,
+    "maxSpeed": 10,
+    "acceleration": 8,
+    "mass": 150,
+    "health": 100
+  },
+  "archer": {
+    "size": 1.5,
+    "maxSpeed": 2.5,
+    "acceleration": 18,
+    "mass": 60,
+    "health": 60
+  }
+}

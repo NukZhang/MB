@@ -1,0 +1,23 @@
+{
+  "canvas": {
+    "width": 1334,
+    "height": 750
+  },
+  "world": {
+    "pixelsPerMeter": 30,
+    "mapWidth": 150,
+    "mapHeight": 30
+  },
+  "grid": {
+    "enabled": true,
+    "cellSize": 1,
+    "color": "#444444",
+    "lineWidth": 1
+  },
+  "spawn": {
+    "interval": 10,
+    "infantry": 4,
+    "archer": 2,
+    "cavalry": 1
+  }
+}
