@@ -3,6 +3,7 @@ class Input {
   constructor(canvas) {
     this.keys = {};
     this.joystick = new Joystick(canvas);
+    this.minimap = null; // 将在游戏初始化后设置
     
     this.setupKeyboardListeners();
   }
@@ -42,6 +43,11 @@ class Input {
     return this.joystick.getDirection();
   }
 
+  // 设置小地图引用
+  setMinimap(minimap) {
+    this.minimap = minimap;
+  }
+  
   // 渲染摇杆
   render(context) {
     this.joystick.render(context);

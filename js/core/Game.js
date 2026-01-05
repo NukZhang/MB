@@ -57,6 +57,12 @@ class Game {
 
     // 创建输入管理器
     this.input = new Input(this.canvas);
+    
+    // 创建小地图
+    this.minimap = new Minimap(this.canvas, this);
+    
+    // 设置输入管理器的小地图引用
+    this.input.setMinimap(this.minimap);
 
     // 创建碰撞系统
     this.collisionSystem = new CollisionSystem();
@@ -293,8 +299,9 @@ class Game {
     // 渲染战斗系统调试信息
     this.combatSystem.renderDebug(this.context, this.camera);
 
-    // 渲染UI（摇杆）
+    // 渲染UI（摇杆和小地图）
     this.input.render(this.context);
+    this.minimap.render(this.context);
     
     // 渲染玩家HP（左上角）
     this.renderPlayerHP();

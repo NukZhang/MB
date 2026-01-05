@@ -78,6 +78,19 @@ class Joystick {
   onMouseDown(e) {
     if (this.touchId === null) {
       this.touchId = 'mouse';
+      
+      const rect = this.canvas.getBoundingClientRect();
+      const canvasX = e.clientX - rect.left;
+      const canvasY = e.clientY - rect.top;
+      
+      // 检查是否点击了小地图
+      const game = window.game;
+      if (game && game.input && game.input.minimap) {
+        if (game.input.minimap.handleClick(canvasX, canvasY)) {
+          return; // 如果点击被小地图处理，不激活摇杆
+        }
+      }
+      
       this.activate(e.clientX, e.clientY);
     }
   }
@@ -99,7 +112,28 @@ class Joystick {
   // 激活摇杆
   activate(clientX, clientY) {
     const rect = this.canvas.getBoundingClientRect();
-    this.basePosition.set(clientX - rect.left, clientY - rect.top);
+    // 调试信息：打印坐标和画布边界
+    console.log('激活摇杆:', {
+      clientX,
+      clientY,
+      rectLeft: rect.left,
+      rectTop: rect.top,
+      canvasWidth: rect.width,
+      canvasHeight: rect.height
+    });
+    
+    const canvasX = clientX - rect.left;
+    const canvasY = clientY - rect.top;
+    
+    // 检查是否点击了小地图
+    const game = window.game;
+    if (game && game.input && game.input.minimap) {
+      if (game.input.minimap.handleClick(canvasX, canvasY)) {
+        return; // 如果点击被小地图处理，不激活摇杆
+      }
+    }
+    
+    this.basePosition.set(canvasX, canvasY);
     this.stickPosition.copy(this.basePosition);
     this.active = true;
   }
@@ -140,6 +174,13 @@ class Joystick {
   // 渲染摇杆
   render(context) {
     if (!this.active) return;
+
+    // 调试信息：打印摇杆位置
+    console.log('渲染摇杆:', {
+      baseX: this.basePosition.x,
+      baseY: this.basePosition.y,
+      active: this.active
+    });
 
     // 绘制底座
     context.fillStyle = this.baseColor;

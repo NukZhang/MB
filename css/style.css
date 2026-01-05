@@ -21,6 +21,12 @@ body {
   display: block;
   max-width: 100%;
   max-height: 100%;
+  /* 添加以下属性确保画布不会被拉伸或缩放 */
+  width: 1334px;
+  height: 750px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 #loading {

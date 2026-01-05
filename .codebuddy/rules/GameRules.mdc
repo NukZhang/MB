@@ -1,18 +1,13 @@
 ---
 description: 
-alwaysApply: false
+alwaysApply: true
 enabled: true
-updatedAt: 2025-12-15T09:12:55.304Z
+updatedAt: 2026-01-05T17:38:57.150Z
 provider: 
 ---
 
----
-description: 
-alwaysApply: true
-enabled: true
-updatedAt: 2025-12-02T04:11:33.327Z
-provider: 
----
+
+
 
 1，说中文
 2，项目需要依据面向对象的思想高度结构化
@@ -24,4 +19,4 @@ provider:
 8，一个方案如果你不太确定是否正确，不要做，寻找更有把握的方案。
 9，渲染方案优先选择当前框架支持的方案，而不是自己开发
 10，调试代码在问题解决后移除
-10，我们开始吧，BT
+11，拉起预览时直接在浏览器中打开index.html文件
