@@ -12,6 +12,20 @@ class Game {
     this.combatSystem = null;
     this.aiSystem = null;
     this.entities = []; // 所有实体列表
+    this.coins = 0;
+    this.upgradeThresholds = [10, 50];
+    this.upgradeIndex = 0;
+    this.upgradeActive = false;
+    this.unlockedWeapons = { sword: false, bow: false, lance: false };
+    this.upgradePanel = null;
+    this.gameOver = false;
+    this.gameOverOverlay = null;
+    this.gameOverMessage = null;
+    this.gameOverButton = null;
+    this.level = 1;
+    this.heroSelectPanel = null;
+    this.selectedHero = null;
+    this.awaitingHeroSelection = false;
     
     this.running = false;
     this.paused = false;
@@ -60,52 +74,20 @@ class Game {
     
     // 创建小地图
     this.minimap = new Minimap(this.canvas, this);
+
+    // 创建升级面板
+    this.upgradePanel = new UpgradePanel();
+    this.createGameOverOverlay();
+    this.heroSelectPanel = new HeroSelectPanel();
     
     // 设置输入管理器的小地图引用
     this.input.setMinimap(this.minimap);
 
-    // 创建碰撞系统
-    this.collisionSystem = new CollisionSystem();
-    
-    // 创建战斗系统
-    this.combatSystem = new CombatSystem();
-    
-    // 创建AI系统
-    this.aiSystem = new AISystem();
-    
     // 将game实例设为全局，方便武器系统访问
     window.game = this;
-    
-    // 创建建筑物
-    this.createBuildings();
 
-    // 创建玩家（在己方建筑旁）
-    const playerConfig = this.config.get('character.player');
-    const mountConfig = this.config.get('mount.defaultHorse');
-    const playerBuildingPos = this.config.get('map.playerBuilding');
-    // 在建筑物前方5米处生成玩家
-    this.player = new Player(playerBuildingPos.x + 5, playerBuildingPos.y, playerConfig, mountConfig);
-    this.entities.push(this.player);
-    this.collisionSystem.addEntity(this.player);
-    this.combatSystem.addEntity(this.player);
-    
-    // 给玩家装备剑
-    const swordConfig = this.config.get('weapon.sword');
-    const sword = new Sword(swordConfig, this.player);
-    this.player.equipWeapon(sword);
-    
-    // 给玩家装备弓
-    const bowConfig = this.config.get('weapon.bow');
-    const bow = new Bow(bowConfig, this.player);
-    this.player.equipWeapon(bow);
-    
-    // 给玩家装备骑枪
-    const lanceConfig = this.config.get('weapon.lance');
-    const lance = new Lance(lanceConfig, this.player);
-    this.player.equipWeapon(lance);
-
-    // 摄像机跟随玩家
-    this.camera.follow(this.player);
+    // 初始化本局状态（等待角色选择）
+    this.beginHeroSelection();
 
     this.initialized = true;
     console.log('游戏初始化完成');
@@ -167,6 +149,157 @@ class Game {
 
     console.log(`创建了 ${infantryPositions.length} 个步兵、${archerPositions.length} 个弓兵、${cavalryPositions.length} 个骑兵`);
   }
+
+  beginHeroSelection() {
+    const heroes = this.getHeroOptions();
+    if (!heroes || heroes.length === 0) {
+      this.selectedHero = null;
+      this.awaitingHeroSelection = false;
+      this.setupSession();
+      return;
+    }
+
+    this.awaitingHeroSelection = true;
+    if (this.canvas) {
+      this.canvas.style.pointerEvents = 'none';
+    }
+
+    if (this.heroSelectPanel) {
+      this.heroSelectPanel.show(heroes, (hero) => {
+        this.selectedHero = hero;
+        this.awaitingHeroSelection = false;
+        if (this.canvas) {
+          this.canvas.style.pointerEvents = 'auto';
+        }
+        this.setupSession();
+      });
+    }
+  }
+
+  getHeroOptions() {
+    const config = this.config.get('hero.heroes');
+    if (Array.isArray(config)) return config;
+    return [];
+  }
+
+  getSelectedHero() {
+    const heroes = this.getHeroOptions();
+    if (this.selectedHero) return this.selectedHero;
+    return heroes.length > 0 ? heroes[0] : null;
+  }
+
+  // 初始化一局游戏的动态状态
+  setupSession() {
+    console.log('开始初始化游戏会话...');
+    
+    this.entities = [];
+    this.buildings = [];
+    this.coins = 0;
+    this.upgradeIndex = 0;
+    this.upgradeActive = false;
+    this.unlockedWeapons = { sword: false, bow: false, lance: false };
+    this.awaitingHeroSelection = false;
+
+    if (this.upgradePanel) {
+      this.upgradePanel.hide();
+    }
+
+    if (this.heroSelectPanel) {
+      this.heroSelectPanel.hide();
+    }
+
+    if (this.gameOverOverlay) {
+      this.gameOverOverlay.classList.add('hidden');
+    }
+
+    if (this.canvas) {
+      this.canvas.style.pointerEvents = 'auto';
+    }
+
+    this.gameOver = false;
+
+    this.collisionSystem = new CollisionSystem();
+    this.combatSystem = new CombatSystem();
+    this.aiSystem = new AISystem();
+
+    console.log('创建建筑物...');
+    this.createBuildings();
+    
+    console.log('创建玩家...');
+    this.createPlayer();
+    
+    console.log('创建初始敌人...');
+    this.createInitialEnemies();
+
+    this.camera.follow(this.player);
+    this.camera.position.copy(this.player.transform.position);
+    this.camera.update(0);
+    
+    console.log('游戏会话初始化完成，准备开始游戏');
+  }
+
+  // 创建玩家（在己方建筑旁）
+  createPlayer() {
+    const basePlayerConfig = this.config.get('character.player');
+    const hero = this.getSelectedHero();
+    const heroStats = hero && hero.stats ? hero.stats : {};
+    const heroColors = hero && hero.colors ? hero.colors : {};
+
+    const playerConfig = {
+      ...basePlayerConfig,
+      ...heroStats,
+      bodyColor: heroColors.body,
+      headColor: heroColors.head,
+      emblemColor: heroColors.accent,
+      avatarText: hero && hero.avatarText ? hero.avatarText : '',
+      avatarColor: heroColors.avatar || heroColors.body,
+      avatarBorderColor: heroColors.accent || '#ffffff',
+      heroName: hero && hero.name ? hero.name : ''
+    };
+
+    const mountConfig = {
+      ...this.config.get('mount.defaultHorse'),
+      ...(hero && hero.mount ? hero.mount : {})
+    };
+    const playerBuildingPos = this.config.get('map.playerBuilding');
+
+    this.player = new Player(playerBuildingPos.x + 5, playerBuildingPos.y, playerConfig, mountConfig);
+    this.entities.push(this.player);
+    this.collisionSystem.addEntity(this.player);
+    this.combatSystem.addEntity(this.player);
+
+    const weaponInfo = hero && hero.weapon ? hero.weapon : { type: 'sword' };
+    const weaponType = weaponInfo.type || 'sword';
+    const baseWeaponConfig = this.config.get(`weapon.${weaponType}`) || {};
+    const weaponConfig = {
+      ...baseWeaponConfig,
+      ...(weaponInfo.overrides || {})
+    };
+
+    // 为关羽和张飞设置专属武器图片
+    const heroId = hero && hero.id ? hero.id : '';
+    if (heroId === 'guanyu' && weaponType === 'sword') {
+      weaponConfig.imagePath = 'res/guandao.png'; // 关羽的大刀
+    } else if (heroId === 'zhangfei' && weaponType === 'sword') {
+      weaponConfig.imagePath = 'res/snakeSpear.png'; // 张飞的蛇矛
+    }
+
+    let weapon = null;
+    if (weaponType === 'bow') {
+      weapon = new Bow(weaponConfig, this.player);
+      this.unlockedWeapons.bow = true;
+    } else if (weaponType === 'lance') {
+      weapon = new Lance(weaponConfig, this.player);
+      this.unlockedWeapons.lance = true;
+    } else {
+      weapon = new Sword(weaponConfig, this.player);
+      this.unlockedWeapons.sword = true;
+    }
+
+    if (weapon) {
+      this.player.equipWeapon(weapon);
+    }
+  }
   
   // 创建建筑物
   createBuildings() {
@@ -204,6 +337,101 @@ class Game {
     console.log('创建了玩家和敌人建筑物（敌人出兵速度更快20%）');
   }
 
+  // 创建初始敌人
+  createInitialEnemies() {
+    console.log('创建初始敌人...');
+    
+    // 获取配置
+    const infantryConfig = this.config.get('character.infantry');
+    const archerConfig = this.config.get('character.archer');
+    const cavalryConfig = this.config.get('character.cavalry');
+    const swordConfig = this.config.get('weapon.sword');
+    const bowConfig = this.config.get('weapon.bow');
+    const lanceConfig = this.config.get('weapon.lance');
+    const mountConfig = this.config.get('mount.defaultHorse');
+    
+    // 初始敌人位置（靠近敌方建筑）
+    const enemyBuildingPos = this.config.get('map.enemyBuilding');
+    const initialPositions = [
+      // 步兵位置
+      { x: enemyBuildingPos.x - 10, y: enemyBuildingPos.y - 5 },
+      { x: enemyBuildingPos.x - 10, y: enemyBuildingPos.y + 5 },
+      // 弓兵位置
+      { x: enemyBuildingPos.x - 15, y: enemyBuildingPos.y },
+      // 骑兵位置
+      { x: enemyBuildingPos.x - 8, y: enemyBuildingPos.y }
+    ];
+    
+    // 创建1个骑兵
+    const cavalry = new Cavalry(
+      initialPositions[3].x,
+      initialPositions[3].y,
+      'enemy',
+      cavalryConfig,
+      mountConfig,
+      lanceConfig
+    );
+    this.entities.push(cavalry);
+    this.collisionSystem.addEntity(cavalry);
+    this.combatSystem.addEntity(cavalry);
+    this.aiSystem.addEntity(cavalry);
+    
+    // 创建2个步兵
+    for (let i = 0; i < 2; i++) {
+      const infantry = new Infantry(initialPositions[i].x, initialPositions[i].y, 'enemy', infantryConfig, swordConfig);
+      this.entities.push(infantry);
+      this.collisionSystem.addEntity(infantry);
+      this.combatSystem.addEntity(infantry);
+      this.aiSystem.addEntity(infantry);
+    }
+    
+    // 创建1个弓兵
+    const archer = new Archer(initialPositions[2].x, initialPositions[2].y, 'enemy', archerConfig, bowConfig);
+    this.entities.push(archer);
+    this.collisionSystem.addEntity(archer);
+    this.combatSystem.addEntity(archer);
+    this.aiSystem.addEntity(archer);
+    
+    console.log('创建了初始敌人：1个骑兵，2个步兵，1个弓兵');
+  }
+
+  getSpawnConfig() {
+    return this.config.get('game.spawn') || { infantry: 4, archer: 2, cavalry: 1 };
+  }
+
+  getEnemyCountScale() {
+    return 1 + (this.level - 1) * 0.2;
+  }
+
+  getEnemyHealthScale() {
+    return 1 + (this.level - 1) * 0.25;
+  }
+
+  getSpawnCounts(team) {
+    const base = this.getSpawnConfig();
+    if (team !== 'enemy') {
+      return { ...base };
+    }
+
+    const scale = this.getEnemyCountScale();
+    return {
+      infantry: Math.max(1, Math.ceil(base.infantry * scale)),
+      archer: Math.max(0, Math.ceil(base.archer * scale)),
+      cavalry: Math.max(0, Math.ceil(base.cavalry * scale))
+    };
+  }
+
+  getUnitConfig(type, team) {
+    const base = this.config.get(`character.${type}`);
+    if (team !== 'enemy') return base;
+
+    const scaled = {
+      ...base,
+      health: Math.round((base.health || 0) * this.getEnemyHealthScale())
+    };
+    return scaled;
+  }
+
   // 启动游戏循环
   start() {
     if (!this.initialized) {
@@ -239,6 +467,7 @@ class Game {
   update(deltaTime) {
     // 限制deltaTime防止跳跃
     deltaTime = Math.min(deltaTime, 0.1);
+    if (this.gameOver || this.awaitingHeroSelection) return;
 
     // 更新输入
     this.input.update();
@@ -272,6 +501,9 @@ class Game {
       building.update(deltaTime);
     });
 
+    this.checkGameOver();
+    if (this.gameOver) return;
+
     // 更新摄像机
     this.camera.update(deltaTime);
   }
@@ -297,7 +529,9 @@ class Game {
     });
     
     // 渲染战斗系统调试信息
-    this.combatSystem.renderDebug(this.context, this.camera);
+    if (this.combatSystem) {
+      this.combatSystem.renderDebug(this.context, this.camera);
+    }
 
     // 渲染UI（摇杆和小地图）
     this.input.render(this.context);
@@ -305,6 +539,12 @@ class Game {
     
     // 渲染玩家HP（左上角）
     this.renderPlayerHP();
+
+    // 渲染金币计数条（右上角）
+    this.renderCoinBar();
+
+    // 渲染关卡信息
+    this.renderLevelIndicator();
   }
   
   // 渲染玩家HP条
@@ -315,7 +555,9 @@ class Game {
     const padding = 20;
     const barWidth = 200;
     const barHeight = 25;
-    const x = padding;
+    const avatarRadius = 18;
+    const hasAvatar = this.player.avatarText && this.player.avatarText.length > 0;
+    const x = hasAvatar ? padding + avatarRadius * 2 + 10 : padding;
     const y = padding;
     
     // 计算生命值比例
@@ -342,6 +584,281 @@ class Game {
     ctx.textBaseline = 'middle';
     const hpText = `HP: ${Math.ceil(this.player.health)} / ${this.player.maxHealth}`;
     ctx.fillText(hpText, x + barWidth / 2, y + barHeight / 2);
+
+    // 绘制头像
+    if (hasAvatar) {
+      const avatarX = padding + avatarRadius;
+      const avatarY = y + barHeight / 2;
+
+      ctx.fillStyle = this.player.avatarColor || '#666666';
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = this.player.avatarBorderColor || '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.player.avatarText, avatarX, avatarY);
+    }
+  }
+
+  // 渲染当前关卡
+  renderLevelIndicator() {
+    const ctx = this.context;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`LEVEL ${this.level}`, this.canvas.width / 2, 18);
+  }
+
+  // 渲染金币计数条
+  renderCoinBar() {
+    const ctx = this.context;
+    const layout = this.getCoinBarLayout();
+    const x = layout.x;
+    const y = layout.y;
+    const barWidth = layout.width;
+    const barHeight = layout.height;
+    const iconRadius = layout.iconRadius;
+
+    const nextThreshold = this.getNextUpgradeThreshold();
+    const lastThreshold = this.getLastUpgradeThreshold();
+    let progress = 1;
+    let label = `${this.coins}`;
+
+    if (nextThreshold) {
+      const span = nextThreshold - lastThreshold;
+      progress = MathUtil.clamp((this.coins - lastThreshold) / span, 0, 1);
+      label = `${this.coins}/${nextThreshold}`;
+    }
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(x, y, barWidth, barHeight);
+
+    const progressHeight = 4;
+    ctx.fillStyle = 'rgba(241, 196, 15, 0.8)';
+    ctx.fillRect(x + 2, y + barHeight - progressHeight - 2, (barWidth - 4) * progress, progressHeight);
+
+    const iconX = x + iconRadius + 8;
+    const iconY = y + barHeight / 2;
+    ctx.fillStyle = '#f1c40f';
+    ctx.beginPath();
+    ctx.arc(iconX, iconY, iconRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#f9e79f';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, iconX + iconRadius + 8, iconY);
+  }
+
+  createGameOverOverlay() {
+    this.gameOverOverlay = document.createElement('div');
+    this.gameOverOverlay.id = 'gameOverOverlay';
+    this.gameOverOverlay.classList.add('hidden');
+
+    const panel = document.createElement('div');
+    panel.className = 'gameover-panel';
+
+    const title = document.createElement('div');
+    title.className = 'gameover-title';
+    title.textContent = '游戏结束';
+
+    this.gameOverMessage = document.createElement('div');
+    this.gameOverMessage.className = 'gameover-message';
+    this.gameOverMessage.textContent = '';
+
+    this.gameOverButton = document.createElement('button');
+    this.gameOverButton.type = 'button';
+    this.gameOverButton.className = 'gameover-btn';
+    this.gameOverButton.textContent = '下一局';
+    this.gameOverButton.addEventListener('click', () => {
+      this.startNextLevel();
+    });
+
+    panel.appendChild(title);
+    panel.appendChild(this.gameOverMessage);
+    panel.appendChild(this.gameOverButton);
+    this.gameOverOverlay.appendChild(panel);
+    document.body.appendChild(this.gameOverOverlay);
+  }
+
+  checkGameOver() {
+    if (this.gameOver) return;
+    const playerBuilding = this.buildings.find(b => b.type === 'player');
+    const enemyBuilding = this.buildings.find(b => b.type === 'enemy');
+
+    const playerDown = playerBuilding && playerBuilding.health <= 0;
+    const enemyDown = enemyBuilding && enemyBuilding.health <= 0;
+
+    if (playerDown && enemyDown) {
+      this.endGame('平局', false);
+    } else if (playerDown) {
+      this.endGame('红方胜利', false);
+    } else if (enemyDown) {
+      this.endGame('蓝方胜利', true);
+    }
+  }
+
+  endGame(resultText, canContinue) {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    this.paused = true;
+    this.running = false;
+
+    if (this.upgradePanel) {
+      this.upgradePanel.hide();
+      this.upgradeActive = false;
+    }
+
+    if (this.canvas) {
+      this.canvas.style.pointerEvents = 'none';
+    }
+
+    if (this.gameOverOverlay && this.gameOverMessage) {
+      this.gameOverMessage.textContent = resultText;
+      if (this.gameOverButton) {
+        this.gameOverButton.classList.toggle('hidden', !canContinue);
+      }
+      this.gameOverOverlay.classList.remove('hidden');
+    }
+  }
+
+  startNextLevel() {
+    if (!this.gameOver) return;
+
+    this.level += 1;
+    this.setupSession();
+    this.lastTime = performance.now();
+    this.running = true;
+    this.paused = false;
+    this.gameLoop();
+  }
+
+  getCoinBarLayout() {
+    const padding = 20;
+    const barWidth = 160;
+    const barHeight = 24;
+    const x = this.canvas.width - barWidth - padding;
+    const y = this.minimap ? this.minimap.y + this.minimap.height + 12 : padding;
+
+    return {
+      x,
+      y,
+      width: barWidth,
+      height: barHeight,
+      iconRadius: 9
+    };
+  }
+
+  getCoinTargetScreenPosition() {
+    const layout = this.getCoinBarLayout();
+    return new Vector2(layout.x + layout.iconRadius + 8, layout.y + layout.height / 2);
+  }
+
+  spawnCoin(position) {
+    if (!position) return;
+    const coin = new Coin(position.x, position.y);
+    this.addEntity(coin);
+  }
+
+  addCoins(amount) {
+    this.coins += amount;
+    this.checkUpgrades();
+  }
+
+  getNextUpgradeThreshold() {
+    return this.upgradeThresholds[this.upgradeIndex] || null;
+  }
+
+  getLastUpgradeThreshold() {
+    if (this.upgradeIndex <= 0) return 0;
+    return this.upgradeThresholds[this.upgradeIndex - 1];
+  }
+
+  checkUpgrades() {
+    if (this.upgradeActive || this.awaitingHeroSelection) return;
+    const nextThreshold = this.getNextUpgradeThreshold();
+    if (nextThreshold && this.coins >= nextThreshold) {
+      this.openUpgradePanel();
+    }
+  }
+
+  openUpgradePanel() {
+    const options = this.getUpgradeOptions();
+    if (!this.upgradePanel || options.length === 0) {
+      this.upgradeIndex += 1;
+      return;
+    }
+
+    this.upgradeActive = true;
+    this.pause();
+    if (this.canvas) {
+      this.canvas.style.pointerEvents = 'none';
+    }
+
+    this.upgradePanel.show(options, (weaponType) => {
+      this.unlockWeapon(weaponType);
+      this.upgradeActive = false;
+      this.upgradeIndex += 1;
+      if (this.canvas) {
+        this.canvas.style.pointerEvents = 'auto';
+      }
+      this.resume();
+    });
+  }
+
+  getUpgradeOptions() {
+    const options = [];
+    if (!this.unlockedWeapons.sword) {
+      options.push({ type: 'sword', label: '解锁剑' });
+    }
+    if (!this.unlockedWeapons.bow) {
+      options.push({ type: 'bow', label: '解锁弓' });
+    }
+    if (!this.unlockedWeapons.lance) {
+      options.push({ type: 'lance', label: '解锁骑枪' });
+    }
+    return options;
+  }
+
+  unlockWeapon(type) {
+    if (!this.player) return;
+
+    if (type === 'sword' && !this.unlockedWeapons.sword) {
+      const swordConfig = this.config.get('weapon.sword');
+      const sword = new Sword(swordConfig, this.player);
+      this.player.equipWeapon(sword);
+      this.unlockedWeapons.sword = true;
+      console.log('解锁剑');
+    }
+
+    if (type === 'bow' && !this.unlockedWeapons.bow) {
+      const bowConfig = this.config.get('weapon.bow');
+      const bow = new Bow(bowConfig, this.player);
+      this.player.equipWeapon(bow);
+      this.unlockedWeapons.bow = true;
+      console.log('解锁弓');
+    }
+
+    if (type === 'lance' && !this.unlockedWeapons.lance) {
+      const lanceConfig = this.config.get('weapon.lance');
+      const lance = new Lance(lanceConfig, this.player);
+      this.player.equipWeapon(lance);
+      this.unlockedWeapons.lance = true;
+      console.log('解锁骑枪');
+    }
   }
 
   // 暂停游戏

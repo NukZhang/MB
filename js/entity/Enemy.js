@@ -97,6 +97,10 @@ class Enemy extends Entity {
     this.alive = false;
     this.deathTimer = 0;
     this.deathRotation = 0;
+
+    if (this.team === 'enemy' && window.game && window.game.spawnCoin) {
+      window.game.spawnCoin(this.transform.position);
+    }
     
     // 根据击退方向设置旋转方向和速度（降低一半）
     if (knockback && knockback.length() > 0) {

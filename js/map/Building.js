@@ -67,16 +67,17 @@ class Building {
   // 生成士兵
   spawnUnits() {
     if (!window.game || !window.game.addEntity) return;
+    const game = window.game;
     
     // 士兵配置
-    const infantryConfig = window.game.config.get('character.infantry');
-    const archerConfig = window.game.config.get('character.archer');
-    const cavalryConfig = window.game.config.get('character.cavalry');
+    const infantryConfig = game.getUnitConfig('infantry', this.type);
+    const archerConfig = game.getUnitConfig('archer', this.type);
+    const cavalryConfig = game.getUnitConfig('cavalry', this.type);
     
-    const mountConfig = window.game.config.get('mount.defaultHorse');
-    const swordConfig = window.game.config.get('weapon.sword');
-    const bowConfig = window.game.config.get('weapon.bow');
-    const lanceConfig = window.game.config.get('weapon.lance');
+    const mountConfig = game.config.get('mount.defaultHorse');
+    const swordConfig = game.config.get('weapon.sword');
+    const bowConfig = game.config.get('weapon.bow');
+    const lanceConfig = game.config.get('weapon.lance');
     
     // 确定队伍
     const team = this.type;
@@ -87,8 +88,10 @@ class Building {
       this.position.x + spawnOffset : 
       this.position.x - spawnOffset;
     
-    // 生成步兵 x4
-    for (let i = 0; i < 4; i++) {
+    const spawnCounts = game.getSpawnCounts(team);
+
+    // 生成步兵
+    for (let i = 0; i < spawnCounts.infantry; i++) {
       const offsetX = (Math.random() - 0.5) * 4; // 随机偏移±2米
       const offsetY = (Math.random() - 0.5) * 3; // 随机偏移±1.5米
       
@@ -100,14 +103,14 @@ class Building {
         swordConfig
       );
       
-      window.game.addEntity(infantry);
-      window.game.collisionSystem.addEntity(infantry);
-      window.game.combatSystem.addEntity(infantry);
-      window.game.aiSystem.addEntity(infantry);
+      game.addEntity(infantry);
+      game.collisionSystem.addEntity(infantry);
+      game.combatSystem.addEntity(infantry);
+      game.aiSystem.addEntity(infantry);
     }
     
-    // 生成弓兵 x2
-    for (let i = 0; i < 2; i++) {
+    // 生成弓兵
+    for (let i = 0; i < spawnCounts.archer; i++) {
       const offsetX = (Math.random() - 0.5) * 4; // 随机偏移±2米
       const offsetY = (Math.random() - 0.5) * 3; // 随机偏移±1.5米
       
@@ -119,31 +122,33 @@ class Building {
         bowConfig
       );
       
-      window.game.addEntity(archer);
-      window.game.collisionSystem.addEntity(archer);
-      window.game.combatSystem.addEntity(archer);
-      window.game.aiSystem.addEntity(archer);
+      game.addEntity(archer);
+      game.collisionSystem.addEntity(archer);
+      game.combatSystem.addEntity(archer);
+      game.aiSystem.addEntity(archer);
     }
     
-    // 生成骑兵 x1
-    const offsetX = (Math.random() - 0.5) * 4; // 随机偏移±2米
-    const offsetY = (Math.random() - 0.5) * 3; // 随机偏移±1.5米
+    // 生成骑兵
+    for (let i = 0; i < spawnCounts.cavalry; i++) {
+      const offsetX = (Math.random() - 0.5) * 4; // 随机偏移±2米
+      const offsetY = (Math.random() - 0.5) * 3; // 随机偏移±1.5米
+      
+      const cavalry = new Cavalry(
+        baseX + offsetX, 
+        this.position.y + offsetY, 
+        team, 
+        cavalryConfig, 
+        mountConfig, 
+        lanceConfig
+      );
+      
+      game.addEntity(cavalry);
+      game.collisionSystem.addEntity(cavalry);
+      game.combatSystem.addEntity(cavalry);
+      game.aiSystem.addEntity(cavalry);
+    }
     
-    const cavalry = new Cavalry(
-      baseX + offsetX, 
-      this.position.y + offsetY, 
-      team, 
-      cavalryConfig, 
-      mountConfig, 
-      lanceConfig
-    );
-    
-    window.game.addEntity(cavalry);
-    window.game.collisionSystem.addEntity(cavalry);
-    window.game.combatSystem.addEntity(cavalry);
-    window.game.aiSystem.addEntity(cavalry);
-    
-    console.log(`${this.type}建筑出兵: 4步兵, 2弓兵, 1骑兵`);
+    console.log(`${this.type}建筑出兵: ${spawnCounts.infantry}步兵, ${spawnCounts.archer}弓兵, ${spawnCounts.cavalry}骑兵`);
   }
   
   // 渲染

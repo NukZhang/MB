@@ -82,6 +82,10 @@ class Minimap {
   renderEntities(context) {
     this.game.entities.forEach(entity => {
       if (entity === this.game.player) return; // 玩家单独渲染
+      if (!entity.active) return; // 只渲染活跃的实体
+      if (entity.alive === false) return; // 只渲染存活的实体
+      if (entity.dying) return;
+      if (entity.type === 'arrow' || entity.type === 'coin') return; // 箭矢和金币不需要显示在小地图上
       
       const color = entity.team === 'player' ? this.playerColor : this.enemyColor;
       const x = this.x + entity.transform.position.x * this.scaleX;

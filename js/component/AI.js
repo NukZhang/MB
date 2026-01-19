@@ -126,7 +126,7 @@ class AI {
       // 如果是建筑目标，则对建筑造成伤害
       if (this.target.isBuilding && this.target.building) {
         // 每次攻击对建筑造成10点伤害
-        this.target.building.health = (this.target.building.health || 100) - 10;
+        this.target.building.health = Math.max(0, this.target.building.health - 10);
         console.log(`士兵攻击建筑，建筑剩余血量: ${this.target.building.health}`);
         if (this.target.building.health <= 0) {
           console.log(`${owner.team}摧毁了敌方建筑！`);
@@ -182,7 +182,7 @@ class AI {
       // 如果是建筑目标，则对建筑造成伤害
       if (this.target.isBuilding && this.target.building) {
         // 远程单位每次攻击对建筑造成15点伤害
-        this.target.building.health = (this.target.building.health || 100) - 15;
+        this.target.building.health = Math.max(0, this.target.building.health - 15);
         console.log(`弓兵攻击建筑，建筑剩余血量: ${this.target.building.health}`);
         if (this.target.building.health <= 0) {
           console.log(`${owner.team}摧毁了敌方建筑！`);
@@ -254,7 +254,7 @@ class AI {
           // 如果目标是建筑，则对建筑造成伤害
           if (this.target.isBuilding && this.target.building) {
             // 骑兵冲锋对建筑造成30点伤害
-            this.target.building.health = (this.target.building.health || 100) - 30;
+            this.target.building.health = Math.max(0, this.target.building.health - 30);
             console.log(`骑兵冲锋攻击建筑，建筑剩余血量: ${this.target.building.health}`);
             if (this.target.building.health <= 0) {
               console.log(`${owner.team}摧毁了敌方建筑！`);

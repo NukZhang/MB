@@ -1,0 +1,169 @@
+{
+  "heroes": [
+    {
+      "id": "guanyu",
+      "name": "关羽",
+      "avatarText": "关",
+      "colors": {
+        "body": "#1abc9c",
+        "head": "#16a085",
+        "avatar": "#0e6655",
+        "accent": "#f1c40f"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 7.6,
+        "acceleration": 45,
+        "mass": 95,
+        "health": 2400
+      },
+      "mount": {
+        "maxSpeed": 11.2,
+        "acceleration": 24
+      },
+      "weapon": {
+        "type": "sword",
+        "name": "大刀",
+        "overrides": {
+          "damage": 80,
+          "cooldown": 2.4,
+          "knockback": 3.5,
+          "maxTargets": 4,
+          "attackRange": 3.0
+        }
+      }
+    },
+    {
+      "id": "zhangfei",
+      "name": "张飞",
+      "avatarText": "张",
+      "colors": {
+        "body": "#34495e",
+        "head": "#2c3e50",
+        "avatar": "#1b2631",
+        "accent": "#e67e22"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 7.4,
+        "acceleration": 40,
+        "mass": 110,
+        "health": 2500
+      },
+      "mount": {
+        "maxSpeed": 11.0,
+        "acceleration": 22
+      },
+      "weapon": {
+        "type": "sword",
+        "name": "蛇矛",
+        "overrides": {
+          "damage": 70,
+          "cooldown": 2.0,
+          "knockback": 4.5,
+          "maxTargets": 6,
+          "attackRange": 3.2
+        }
+      }
+    },
+    {
+      "id": "zhaoyun",
+      "name": "赵云",
+      "avatarText": "赵",
+      "colors": {
+        "body": "#5dade2",
+        "head": "#3498db",
+        "avatar": "#2e86c1",
+        "accent": "#f5b7b1"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 8.8,
+        "acceleration": 70,
+        "mass": 80,
+        "health": 2000
+      },
+      "mount": {
+        "maxSpeed": 13.2,
+        "acceleration": 32
+      },
+      "weapon": {
+        "type": "sword",
+        "name": "剑",
+        "overrides": {
+          "damage": 55,
+          "cooldown": 0.4,
+          "knockback": 2.2,
+          "maxTargets": 3,
+          "attackRange": 2.6
+        }
+      }
+    },
+    {
+      "id": "machao",
+      "name": "马超",
+      "avatarText": "马",
+      "colors": {
+        "body": "#e74c3c",
+        "head": "#c0392b",
+        "avatar": "#a93226",
+        "accent": "#f39c12"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 9.4,
+        "acceleration": 65,
+        "mass": 85,
+        "health": 2100
+      },
+      "mount": {
+        "maxSpeed": 14.0,
+        "acceleration": 34
+      },
+      "weapon": {
+        "type": "lance",
+        "name": "枪",
+        "overrides": {
+          "damage": 170,
+          "cooldown": 0.5,
+          "knockback": 9,
+          "maxTargets": 6,
+          "speedThreshold": 0.75
+        }
+      }
+    },
+    {
+      "id": "huangzhong",
+      "name": "黄忠",
+      "avatarText": "黄",
+      "colors": {
+        "body": "#f4d03f",
+        "head": "#f5cba7",
+        "avatar": "#b7950b",
+        "accent": "#a04000"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 8.0,
+        "acceleration": 55,
+        "mass": 75,
+        "health": 1900
+      },
+      "mount": {
+        "maxSpeed": 11.8,
+        "acceleration": 26
+      },
+      "weapon": {
+        "type": "bow",
+        "name": "弓",
+        "overrides": {
+          "damage": 40,
+          "cooldown": 1.7,
+          "knockback": 1.2,
+          "range": 22,
+          "arrowSpeed": 16
+        }
+      }
+    }
+  ]
+}

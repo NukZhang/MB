@@ -20,8 +20,13 @@ class Player extends Entity {
     this.collider = this.addComponent('collider', new Collider(this.radius, config.mass));
     
     // 渲染颜色
-    this.bodyColor = '#4a90e2';
-    this.headColor = '#6fa8dc';
+    this.bodyColor = config.bodyColor || '#4a90e2';
+    this.headColor = config.headColor || '#6fa8dc';
+    this.emblemColor = config.emblemColor || null;
+    this.avatarText = config.avatarText || '';
+    this.avatarColor = config.avatarColor || this.bodyColor;
+    this.avatarBorderColor = config.avatarBorderColor || '#ffffff';
+    this.heroName = config.heroName || '';
 
     // 面向方向（1为右，-1为左）
     this.facingDirection = 1;
@@ -315,6 +320,20 @@ class Player extends Entity {
     context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
     context.lineWidth = 2;
     context.stroke();
+
+    // 英雄徽记
+    if (this.emblemColor) {
+      context.fillStyle = this.emblemColor;
+      context.beginPath();
+      context.arc(
+        this.facingDirection * screenRadius * 0.15,
+        bodyBobOffset + screenRadius * 0.05,
+        screenRadius * 0.12,
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+    }
 
     // 绘制头部（在身体上方，前后晃动）
     const headX = this.facingDirection * screenRadius * 0.15;

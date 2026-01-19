@@ -3,6 +3,9 @@
 ## 架构概述
 本项目采用面向对象设计，使用纯前端技术栈（HTML5 Canvas + JavaScript）实现。遵循数据驱动设计，所有游戏参数可通过配置文件调整。
 
+## 进度更新
+已保证英雄选择阶段的渲染不依赖战斗系统初始化，避免选择前后游戏循环中断。修正初始敌方骑兵创建流程需要坐骑配置。升级选项按当前缺失的三类武器生成，修复初始武器非剑时无法解锁剑的问题。修正赵云初始武器攻击范围配置过小导致近战无法命中的问题。
+
 ## 目录结构
 ```
 MB/
@@ -49,7 +52,8 @@ MB/
 │   ├── ui/
 │   │   ├── Joystick.js         # 虚拟摇杆
 │   │   ├── HUD.js              # 抬头显示
-│   │   └── UpgradePanel.js     # 升级面板
+│   │   ├── UpgradePanel.js     # 升级面板
+│   │   └── HeroSelectPanel.js  # 角色选择面板
 │   ├── map/
 │   │   ├── BattleMap.js        # 战斗地图
 │   │   └── Building.js         # 建筑物
@@ -60,7 +64,9 @@ MB/
 │   ├── game.json              # 游戏基础配置
 │   ├── character.json         # 角色配置
 │   ├── weapon.json            # 武器配置
-│   └── map.json               # 地图配置
+│   ├── map.json               # 地图配置
+│   ├── mount.json             # 坐骑配置
+│   └── hero.json              # 英雄角色配置
 ├── res/                       # 美术资源
 └── SPEC/                      # 设计文档
 ```
@@ -576,6 +582,179 @@ Lance.update(deltaTime)
 }
 ```
 
+### hero.json
+```json
+{
+  "heroes": [
+    {
+      "id": "guanyu",
+      "name": "关羽",
+      "avatarText": "关",
+      "colors": {
+        "body": "#1abc9c",
+        "head": "#16a085",
+        "avatar": "#0e6655",
+        "accent": "#f1c40f"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 7.6,
+        "acceleration": 45,
+        "mass": 95,
+        "health": 2400
+      },
+      "mount": {
+        "maxSpeed": 11.2,
+        "acceleration": 24
+      },
+      "weapon": {
+        "type": "sword",
+        "name": "大刀",
+        "overrides": {
+          "damage": 80,
+          "cooldown": 2.4,
+          "knockback": 3.5,
+          "maxTargets": 4,
+          "attackRange": 3.0
+        }
+      }
+    },
+    {
+      "id": "zhangfei",
+      "name": "张飞",
+      "avatarText": "张",
+      "colors": {
+        "body": "#34495e",
+        "head": "#2c3e50",
+        "avatar": "#1b2631",
+        "accent": "#e67e22"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 7.4,
+        "acceleration": 40,
+        "mass": 110,
+        "health": 2500
+      },
+      "mount": {
+        "maxSpeed": 11.0,
+        "acceleration": 22
+      },
+      "weapon": {
+        "type": "sword",
+        "name": "蛇矛",
+        "overrides": {
+          "damage": 70,
+          "cooldown": 2.0,
+          "knockback": 4.5,
+          "maxTargets": 3,
+          "attackRange": 3.2
+        }
+      }
+    },
+    {
+      "id": "zhaoyun",
+      "name": "赵云",
+      "avatarText": "赵",
+      "colors": {
+        "body": "#5dade2",
+        "head": "#3498db",
+        "avatar": "#2e86c1",
+        "accent": "#f5b7b1"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 8.8,
+        "acceleration": 70,
+        "mass": 80,
+        "health": 2000
+      },
+      "mount": {
+        "maxSpeed": 13.2,
+        "acceleration": 32
+      },
+      "weapon": {
+        "type": "sword",
+        "name": "剑",
+        "overrides": {
+          "damage": 55,
+          "cooldown": 1.6,
+          "knockback": 2.2,
+          "maxTargets": 3,
+          "attackRange": 2.6
+        }
+      }
+    },
+    {
+      "id": "machao",
+      "name": "马超",
+      "avatarText": "马",
+      "colors": {
+        "body": "#e74c3c",
+        "head": "#c0392b",
+        "avatar": "#a93226",
+        "accent": "#f39c12"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 9.4,
+        "acceleration": 65,
+        "mass": 85,
+        "health": 2100
+      },
+      "mount": {
+        "maxSpeed": 14.0,
+        "acceleration": 34
+      },
+      "weapon": {
+        "type": "lance",
+        "name": "枪",
+        "overrides": {
+          "damage": 170,
+          "cooldown": 0.9,
+          "knockback": 9,
+          "maxTargets": 6,
+          "speedThreshold": 0.75
+        }
+      }
+    },
+    {
+      "id": "huangzhong",
+      "name": "黄忠",
+      "avatarText": "黄",
+      "colors": {
+        "body": "#f4d03f",
+        "head": "#f5cba7",
+        "avatar": "#b7950b",
+        "accent": "#a04000"
+      },
+      "stats": {
+        "size": 2.0,
+        "maxSpeed": 8.0,
+        "acceleration": 55,
+        "mass": 75,
+        "health": 1900
+      },
+      "mount": {
+        "maxSpeed": 11.8,
+        "acceleration": 26
+      },
+      "weapon": {
+        "type": "bow",
+        "name": "弓",
+        "overrides": {
+          "damage": 40,
+          "cooldown": 1.7,
+          "knockback": 1.2,
+          "range": 22,
+          "arrowSpeed": 16
+        }
+      }
+    }
+  ]
+}
+```
+
 ## 技术约束与实现细节
 
 ### 1. 模块加载顺序
@@ -710,15 +889,26 @@ python -m http.server 8000
 - [x] 骑乘系统
 - [x] 地图系统
 - [x] 虚拟摇杆
+- [x] 建筑物与自动出兵
+- [x] 金币掉落与拾取
+- [x] 金币计数UI
+- [x] 升级选择面板与武器解锁
+- [x] 胜负判定与游戏结束
+- [x] 关卡推进与难度提升
+- [x] 角色选择与头像展示
 
 ### ⏳ 待实现功能（按迭代顺序）
-- [ ] 迭代10: 建筑物和自动出兵
-- [ ] 迭代11: 金币掉落和升级系统
-  - [ ] 敌人死亡掉落金币
-  - [ ] 金币拾取动画
-  - [ ] 金币计数UI
-  - [ ] 升级弹窗
-  - [ ] 武器解锁（弓/骑枪）
+- [x] 迭代10: 建筑物和自动出兵
+- [x] 迭代11: 金币掉落和升级系统
+  - [x] 敌人死亡掉落金币
+  - [x] 金币拾取动画
+  - [x] 金币计数UI
+  - [x] 升级弹窗
+  - [x] 武器解锁（弓/骑枪）
+- [x] 小地图优化：角色死亡后红蓝点同步更新
+- [x] 迭代13: 建筑物血量归零时游戏结束，蓝方/红方胜利判定
+- [x] 迭代14: 胜利后开启下一局，重置状态并提升敌人数量/血量，记录关卡
+- [x] 迭代15: 开局角色选择（五虎将），初始武器与属性差异化，头像显示在血条左侧
 
 ## 常见问题与解决方案
 

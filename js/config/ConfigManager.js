@@ -12,7 +12,8 @@ class ConfigManager {
       'character',
       'weapon',
       'map',
-      'mount'
+      'mount',
+      'hero'
     ];
 
     try {
@@ -38,10 +39,14 @@ class ConfigManager {
       }
       const data = await response.json();
       this.configs[name] = data;
-      console.log(`配置加载成功: ${name}`, data);
       return data;
     } catch (error) {
       console.error(`配置加载错误 (${name}):`, error);
+      // 对于hero配置，即使加载失败也继续执行，避免影响游戏启动
+      if (name === 'hero') {
+        this.configs[name] = { heroes: [] };
+        return this.configs[name];
+      }
       throw error;
     }
   }
